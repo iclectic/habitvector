@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="#4F46E5" opacity="0.08"/>
+  <!-- Upward vector arrow shaft -->
+  <line x1="256" y1="400" x2="256" y2="120" stroke="#4F46E5" stroke-width="32" stroke-linecap="round"/>
+  <!-- Arrowhead -->
+  <polyline points="176,200 256,120 336,200" fill="none" stroke="#4F46E5" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Small accent dots representing data/progress -->
+  <circle cx="180" cy="340" r="16" fill="#22C55E" opacity="0.7"/>
+  <circle cx="332" cy="300" r="12" fill="#818CF8" opacity="0.6"/>
+  <circle cx="180" cy="260" r="10" fill="#F59E0B" opacity="0.5"/>
+</svg>

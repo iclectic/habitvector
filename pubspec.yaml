@@ -1,0 +1,91 @@
+name: habit_flow
+description: Habit Vector - A habit tracker focused on daily consistency, streaks, and simple insights.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+  flutter: '>=3.16.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # State management
+  flutter_riverpod: ^2.4.9
+
+  # Local storage
+  drift: ^2.14.1
+  sqlite3_flutter_libs: ^0.5.18
+  path_provider: ^2.1.1
+  path: ^1.8.3
+
+  # Notifications
+  flutter_local_notifications: ^17.0.0
+  timezone: ^0.9.2
+
+  # UUID
+  uuid: ^4.2.1
+
+  # Charts
+  fl_chart: ^0.66.2
+
+  # Date utilities
+  intl: any
+
+
+  # File operations
+  share_plus: ^7.2.1
+  file_picker: ^6.1.1
+
+  # Shared preferences for simple key-value (onboarding flag, theme etc)
+  shared_preferences: ^2.2.2
+
+  # Firebase
+  firebase_core: ^3.8.1
+  firebase_auth: ^5.4.1
+  google_sign_in: ^6.2.2
+  sign_in_with_apple: ^6.1.4
+  crypto: ^3.0.6
+
+  # SVG rendering
+  flutter_svg: ^2.0.17
+
+  # Google Fonts
+  google_fonts: ^6.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+  # Code generation
+  build_runner: ^2.4.7
+  drift_dev: ^2.14.1
+
+  # Testing
+  mockito: ^5.4.4
+
+  # Splash screen generation
+  flutter_native_splash: ^2.4.4
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/svg/
+
+flutter_native_splash:
+  color: "#F8FAFC"
+  color_dark: "#0F172A"
+  image: assets/images/splash_logo.png
+  image_dark: assets/images/splash_logo_dark.png
+  android_12:
+    color: "#F8FAFC"
+    color_dark: "#0F172A"
+    image: assets/images/splash_logo.png
+    image_dark: assets/images/splash_logo_dark.png
+
