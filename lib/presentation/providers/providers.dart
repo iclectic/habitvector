@@ -31,7 +31,10 @@ final habitLogRepositoryProvider = Provider<HabitLogRepository>((ref) {
 // ---------- Use Cases ----------
 
 final habitUseCasesProvider = Provider<HabitUseCases>((ref) {
-  return HabitUseCases(ref.watch(habitRepositoryProvider));
+  return HabitUseCases(
+    ref.watch(habitRepositoryProvider),
+    notificationService: ref.watch(notificationServiceProvider),
+  );
 });
 
 final logUseCasesProvider = Provider<LogUseCases>((ref) {
@@ -57,11 +60,11 @@ final notificationServiceProvider = Provider<NotificationService>((ref) {
 
 // ---------- Stream Providers ----------
 
-final activeHabitsProvider = StreamProvider<List<dynamic>>((ref) {
+final activeHabitsProvider = StreamProvider((ref) {
   return ref.watch(habitUseCasesProvider).watchActiveHabits();
 });
 
-final todayLogsProvider = StreamProvider<List<dynamic>>((ref) {
+final todayLogsProvider = StreamProvider((ref) {
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
   return ref.watch(logUseCasesProvider).watchLogsForDate(today);

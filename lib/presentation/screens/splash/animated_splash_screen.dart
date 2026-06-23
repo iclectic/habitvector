@@ -79,9 +79,8 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark
-          ? const Color(0xFF0F172A)
-          : const Color(0xFFF8FAFC),
+      backgroundColor:
+          isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
       body: Center(
         child: AnimatedBuilder(
           animation: _controller,

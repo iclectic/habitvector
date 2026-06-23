@@ -82,15 +82,13 @@ class _HomeBody extends ConsumerWidget {
           ),
         ),
       ),
-      data: (habitsRaw) {
-        final habits = habitsRaw.cast<Habit>();
+      data: (habits) {
         final todayHabits = habits.where((h) => h.isDueOn(today)).toList();
 
         return logsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => Center(child: Text('Error loading logs: $e')),
-          data: (logsRaw) {
-            final logs = logsRaw.cast<HabitLog>();
+          data: (logs) {
             final logMap = <String, HabitLog>{};
             for (final log in logs) {
               logMap[log.habitId] = log;
@@ -188,8 +186,7 @@ class _HomeBody extends ConsumerWidget {
           else
             ...todayHabits.map(
               (habit) => Padding(
-                padding:
-                    const EdgeInsets.only(bottom: AppTheme.spacingSm),
+                padding: const EdgeInsets.only(bottom: AppTheme.spacingSm),
                 child: HabitTile(
                   habit: habit,
                   log: logMap[habit.id],
@@ -202,8 +199,7 @@ class _HomeBody extends ConsumerWidget {
                   },
                   onToggle: () => _toggleHabit(ref, habit, logMap[habit.id]),
                   onSkip: () => _skipHabit(ref, habit),
-                  onQuantitySubmit: (value) =>
-                      _logQuantity(ref, habit, value),
+                  onQuantitySubmit: (value) => _logQuantity(ref, habit, value),
                 ),
               ),
             ),
@@ -263,8 +259,7 @@ class _HomeBody extends ConsumerWidget {
     await ref.read(logUseCasesProvider).skip(habit.id);
   }
 
-  Future<void> _logQuantity(
-      WidgetRef ref, Habit habit, double value) async {
+  Future<void> _logQuantity(WidgetRef ref, Habit habit, double value) async {
     HapticFeedback.mediumImpact();
     await ref.read(logUseCasesProvider).logQuantity(habit.id, value, habit);
   }

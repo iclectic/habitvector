@@ -20,6 +20,7 @@ enum AuthStatus {
   unknown,
   authenticated,
   unauthenticated,
+  localOnly,
 }
 
 /// Result wrapper for auth operations.
@@ -45,6 +46,9 @@ abstract class AuthRepository {
 
   /// The currently signed-in user, or null.
   AuthUser? get currentUser;
+
+  /// Whether this repository can perform remote OAuth sign-in.
+  bool get isConfigured;
 
   /// Sign in with Google.
   Future<AuthResult> signInWithGoogle();

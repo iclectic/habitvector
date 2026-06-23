@@ -10,6 +10,8 @@ class DriftHabitLogRepository implements HabitLogRepository {
 
   DriftHabitLogRepository(this._db);
 
+  AppDatabase get database => _db;
+
   DateTime _normalise(DateTime d) => DateTime(d.year, d.month, d.day);
 
   @override
@@ -44,8 +46,8 @@ class DriftHabitLogRepository implements HabitLogRepository {
     final d = _normalise(date);
     final next = d.add(const Duration(days: 1));
     final query = _db.select(_db.habitLogs)
-      ..where(
-          (l) => l.date.isBiggerOrEqualValue(d) & l.date.isSmallerThanValue(next));
+      ..where((l) =>
+          l.date.isBiggerOrEqualValue(d) & l.date.isSmallerThanValue(next));
     final rows = await query.get();
     return rows.map(HabitLogMapper.toDomain).toList();
   }
@@ -55,8 +57,8 @@ class DriftHabitLogRepository implements HabitLogRepository {
     final s = _normalise(start);
     final e = _normalise(end).add(const Duration(days: 1));
     final query = _db.select(_db.habitLogs)
-      ..where((l) =>
-          l.date.isBiggerOrEqualValue(s) & l.date.isSmallerThanValue(e))
+      ..where(
+          (l) => l.date.isBiggerOrEqualValue(s) & l.date.isSmallerThanValue(e))
       ..orderBy([(l) => OrderingTerm.asc(l.date)]);
     final rows = await query.get();
     return rows.map(HabitLogMapper.toDomain).toList();
@@ -93,8 +95,7 @@ class DriftHabitLogRepository implements HabitLogRepository {
 
   @override
   Future<void> deleteLogsForHabit(String habitId) async {
-    await (_db.delete(_db.habitLogs)
-          ..where((l) => l.habitId.equals(habitId)))
+    await (_db.delete(_db.habitLogs)..where((l) => l.habitId.equals(habitId)))
         .go();
   }
 
@@ -103,8 +104,8 @@ class DriftHabitLogRepository implements HabitLogRepository {
     final d = _normalise(date);
     final next = d.add(const Duration(days: 1));
     final query = _db.select(_db.habitLogs)
-      ..where(
-          (l) => l.date.isBiggerOrEqualValue(d) & l.date.isSmallerThanValue(next));
+      ..where((l) =>
+          l.date.isBiggerOrEqualValue(d) & l.date.isSmallerThanValue(next));
     return query.watch().map(
           (rows) => rows.map(HabitLogMapper.toDomain).toList(),
         );

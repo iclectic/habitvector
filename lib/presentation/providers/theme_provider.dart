@@ -53,7 +53,8 @@ class ThemeNotifier extends StateNotifier<AppThemeMode> {
     final prefs = await SharedPreferences.getInstance();
     final stored = prefs.getString(_kThemeKey);
     if (stored != null) {
-      final mode = AppThemeMode.values.where((m) => m.name == stored).firstOrNull;
+      final mode =
+          AppThemeMode.values.where((m) => m.name == stored).firstOrNull;
       if (mode != null) {
         state = mode;
       }

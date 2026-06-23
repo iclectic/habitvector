@@ -2,10 +2,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/auth/auth_controller.dart';
 import '../../data/repositories/firebase_auth_repository.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../../main.dart';
 
 /// Provides the [AuthRepository] implementation.
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  return FirebaseAuthRepository();
+  return FirebaseAuthRepository(
+    configured: ref.watch(authConfiguredProvider),
+  );
 });
 
 /// Provides the [AuthController] which manages authentication state.

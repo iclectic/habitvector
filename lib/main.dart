@@ -13,6 +13,8 @@ import 'presentation/screens/onboarding/onboarding_screen.dart';
 import 'presentation/screens/shell/app_shell.dart';
 import 'presentation/screens/splash/animated_splash_screen.dart';
 
+final authConfiguredProvider = Provider<bool>((ref) => true);
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -21,17 +23,28 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  // Initialise Firebase. If firebase_options.dart does not exist yet,
-  // catch the error and continue (auth features will be unavailable).
-  try {
-    await Firebase.initializeApp();
-  } catch (e) {
-    debugPrint('Firebase init skipped: $e');
-  }
+  final authConfigured = await _initialiseFirebase();
 
   await NotificationService().initialise();
 
-  runApp(const ProviderScope(child: HabitVectorApp()));
+  runApp(
+    ProviderScope(
+      overrides: [
+        authConfiguredProvider.overrideWithValue(authConfigured),
+      ],
+      child: const HabitVectorApp(),
+    ),
+  );
+}
+
+Future<bool> _initialiseFirebase() async {
+  try {
+    await Firebase.initializeApp();
+    return true;
+  } catch (e) {
+    debugPrint('Firebase init skipped: $e');
+    return false;
+  }
 }
 
 class HabitVectorApp extends ConsumerWidget {
@@ -71,6 +84,8 @@ class _AuthGate extends ConsumerWidget {
         );
       case AuthStatus.unauthenticated:
         return const WelcomeScreen();
+      case AuthStatus.localOnly:
+        return const _OnboardingGate();
       case AuthStatus.authenticated:
         return const _OnboardingGate();
     }

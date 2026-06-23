@@ -1,10 +1,10 @@
 # Habit Vector
 
-A production-quality Flutter habit tracker focused on daily consistency, streaks, and simple insights. Offline-first, private, and beautifully designed with Firebase authentication.
+A production-quality Flutter habit tracker focused on daily consistency, streaks, and simple insights. Offline-first, private, and beautifully designed with optional Firebase authentication.
 
 ## Features
 
-- **Authentication**: Sign in with Google, Apple, and Microsoft (scaffolded) via Firebase Auth
+- **Authentication**: Continue locally without sign-in, or sign in with Google/Apple via Firebase Auth once configured
 - **Habit Tracking**: Create tick (yes/no) or quantity-based habits with flexible scheduling (daily, specific days, or x times per week)
 - **Streaks**: Automatic streak calculation for each schedule type with current and longest streak tracking
 - **Insights**: Weekly and monthly completion charts, best/struggling habits, completion rates over 7/30/90 days
@@ -21,7 +21,7 @@ A production-quality Flutter habit tracker focused on daily consistency, streaks
 
 - **Flutter** (stable channel)
 - **State Management**: Riverpod (StateNotifier, StreamProvider, Provider)
-- **Authentication**: Firebase Auth (Google, Apple, Microsoft stub)
+- **Authentication**: Optional Firebase Auth (Google, Apple; Microsoft deferred)
 - **Local Storage**: Drift (SQLite)
 - **Charts**: fl_chart
 - **Notifications**: flutter_local_notifications with timezone support
@@ -77,7 +77,7 @@ test/
    flutter --version
    ```
 2. **Dart SDK** (3.2+, bundled with Flutter)
-3. **Firebase CLI** and **FlutterFire CLI** (for auth setup)
+3. **Firebase CLI** and **FlutterFire CLI** (optional, for Google/Apple auth setup)
    ```
    dart pub global activate flutterfire_cli
    ```
@@ -92,23 +92,17 @@ test/
    flutter pub get
    ```
 
-3. **Configure Firebase**:
+3. **Configure Firebase** (optional for local-only use):
    ```bash
    flutterfire configure
    ```
-   This generates `lib/firebase_options.dart` and platform config files (`google-services.json`, `GoogleService-Info.plist`).
-
-   Then update `main.dart` to use the generated options:
-   ```dart
-   import 'firebase_options.dart';
-   // In main():
-   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-   ```
+   This generates `lib/firebase_options.dart` and platform config files (`google-services.json`, `GoogleService-Info.plist`). The app falls back to local-only mode when Firebase is not configured.
 
 4. **Run code generation** (for Drift):
    ```bash
-   dart run build_runner build --delete-conflicting-outputs
+   dart run build_runner build
    ```
+   Generated `*.g.dart` files are intentionally ignored and reproducible from this step. `pubspec.lock` is committed for reproducible app dependencies.
 
 5. **Generate native splash** (optional, for branded splash screen):
    ```bash
@@ -151,16 +145,16 @@ test/
 
 ```
 main() -> AnimatedSplashScreen -> AuthGate -> WelcomeScreen (if unauthenticated)
-                                            -> OnboardingGate -> AppShell (if authenticated)
+                                            -> OnboardingGate -> AppShell (if local-only or authenticated)
 ```
 
 ### Key Components
 
-- **`AuthRepository`** (interface): Defines `signInWithGoogle()`, `signInWithApple()`, `signInWithMicrosoft()`, `signOut()`, `authStateChanges`
+- **`AuthRepository`** (interface): Defines `signInWithGoogle()`, `signInWithApple()`, `signInWithMicrosoft()`, `signOut()`, `authStateChanges`, and whether remote auth is configured
 - **`FirebaseAuthRepository`**: Concrete implementation using `firebase_auth`, `google_sign_in`, `sign_in_with_apple`
-- **`AuthController`** (StateNotifier): Manages `AuthState` with `status`, `user`, `isLoading`, `errorMessage`
+- **`AuthController`** (StateNotifier): Manages `AuthState` with `status`, `user`, `isLoading`, `errorMessage`, and local-only continuation
 - **`AuthGate`** (widget): Route guard that redirects based on `AuthStatus`
-- **Microsoft sign-in**: UI button is present; backend returns a descriptive TODO message. Ready to plug in via `OAuthProvider('microsoft.com')` once Azure AD is configured.
+- **Microsoft sign-in**: Deferred until Azure AD and Firebase provider setup are available; the UI presents it as unavailable instead of a working sign-in path.
 
 ## Theming
 
@@ -210,7 +204,7 @@ main() -> AnimatedSplashScreen -> AuthGate -> WelcomeScreen (if unauthenticated)
 | Onboarding tips | First-run guidance reduces abandonment | Implemented |
 | Streaks + reminders | Core motivation loop | Implemented |
 | Local notifications | Permission flow included | Implemented |
-| Data export (JSON) | Users want data portability | Implemented |
+| Data export/import (JSON) | Users want data portability; validation rejects unsupported versions and duplicate same-day logs | Implemented |
 | Theme persistence | Expected UX; avoids re-selecting each launch | Implemented |
 
 ### Later (high value, moderate effort)
@@ -227,28 +221,29 @@ main() -> AnimatedSplashScreen -> AuthGate -> WelcomeScreen (if unauthenticated)
 ## Verification Checklist
 
 - [ ] `flutter pub get` succeeds
-- [ ] `flutter analyze` reports 0 errors, 0 warnings
-- [ ] `flutter test` passes all tests (streak, repository, widget)
+- [ ] `flutter analyze` reports no errors or warnings; current Flutter SDK may still report info-level deprecations in older UI code
+- [ ] `flutter test` passes all tests (streak, repository, auth, export/import, widget)
 - [ ] Android: App displays "Habit Vector" in launcher and app bar
 - [ ] iOS: App displays "Habit Vector" in launcher and app bar
 - [ ] Firebase initialises without error (after `flutterfire configure`)
 - [ ] Google sign-in works on Android and iOS
 - [ ] Apple sign-in works on iOS (requires capability)
-- [ ] Microsoft button shows descriptive message (not yet configured)
+- [ ] Microsoft sign-in is visibly unavailable/deferred until Azure AD and Firebase provider setup are complete
 - [ ] Theme toggle (System/Light/Dark) persists across restarts
 - [ ] Animated splash screen displays logo then transitions
-- [ ] Sign-out returns to Welcome screen
-- [ ] Onboarding only shows once after auth
+- [ ] Sign-out preserves local habit access
+- [ ] Onboarding only shows once after local-only entry or auth
 - [ ] Export/import still works after rename
 
 ## Possible Pitfalls
 
-1. **Firebase not configured**: App catches the init error and continues, but auth buttons will fail. Run `flutterfire configure` first.
+1. **Firebase not configured**: App catches the init error and continues in local-only mode. Run `flutterfire configure` before testing Google or Apple sign-in.
 2. **Apple sign-in on Android**: Button is only shown on iOS/macOS. If you need it on Android, use Firebase's `signInWithProvider` instead.
 3. **SHA-1 for Google Sign-In (Android)**: Must be registered in Firebase Console. Use `./gradlew signingReport` to get your debug SHA-1.
 4. **Apple Developer account**: Sign in with Apple requires an active Apple Developer Program membership and the capability enabled.
 5. **Splash logo PNGs**: Placeholders are 1x1 transparent. Replace with 1152x1152 branded PNGs before running `flutter_native_splash:create`.
 6. **Database migration**: The SQLite filename is still `habit_flow.sqlite` intentionally to preserve existing user data.
+7. **Firebase config vs credentials**: Generated Firebase app identifiers are configuration, but OAuth provider secrets and signing credentials must stay outside source control.
 
 ## Licence
 

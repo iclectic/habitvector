@@ -187,10 +187,9 @@ class SettingsScreen extends ConsumerWidget {
                                     itemCount: pending.length,
                                     itemBuilder: (_, i) => ListTile(
                                       dense: true,
-                                      title: Text(
-                                          pending[i].title ?? 'Untitled'),
-                                      subtitle:
-                                          Text(pending[i].body ?? ''),
+                                      title:
+                                          Text(pending[i].title ?? 'Untitled'),
+                                      subtitle: Text(pending[i].body ?? ''),
                                     ),
                                   ),
                           ),
@@ -255,9 +254,9 @@ class SettingsScreen extends ConsumerWidget {
                   leading: Icon(Icons.privacy_tip_outlined,
                       color: theme.colorScheme.primary),
                   title: const Text('Privacy'),
-                  subtitle: const Text(
-                      'All data is stored locally on your device. '
-                      'Authentication is used for identity only.'),
+                  subtitle:
+                      const Text('All data is stored locally on your device. '
+                          'Authentication is used for identity only.'),
                 ),
               ],
             ),
@@ -265,19 +264,21 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: AppTheme.spacingLg),
 
           // Sign out
-          Card(
-            child: ListTile(
-              leading: Icon(Icons.logout_rounded,
-                  color: theme.colorScheme.error),
-              title: Text(
-                'Sign Out',
-                style: TextStyle(color: theme.colorScheme.error),
+          if (authState.user != null) ...[
+            Card(
+              child: ListTile(
+                leading:
+                    Icon(Icons.logout_rounded, color: theme.colorScheme.error),
+                title: Text(
+                  'Sign Out',
+                  style: TextStyle(color: theme.colorScheme.error),
+                ),
+                subtitle: const Text('You will need to sign in again'),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => _confirmSignOut(context, ref),
               ),
-              subtitle: const Text('You will need to sign in again'),
-              trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () => _confirmSignOut(context, ref),
             ),
-          ),
+          ],
           const SizedBox(height: AppTheme.spacingXxl),
         ],
       ),

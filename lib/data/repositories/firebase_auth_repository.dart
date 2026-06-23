@@ -10,14 +10,23 @@ import '../../domain/repositories/auth_repository.dart';
 
 /// Firebase-backed implementation of [AuthRepository].
 class FirebaseAuthRepository implements AuthRepository {
-  final fb.FirebaseAuth _firebaseAuth;
-  final GoogleSignIn _googleSignIn;
+  final fb.FirebaseAuth? _firebaseAuth;
+  final GoogleSignIn? _googleSignIn;
+  final bool _configured;
 
   FirebaseAuthRepository({
     fb.FirebaseAuth? firebaseAuth,
     GoogleSignIn? googleSignIn,
-  })  : _firebaseAuth = firebaseAuth ?? fb.FirebaseAuth.instance,
-        _googleSignIn = googleSignIn ?? GoogleSignIn();
+    bool configured = true,
+  })  : _configured = configured,
+        _firebaseAuth = configured
+            ? (firebaseAuth ?? fb.FirebaseAuth.instance)
+            : firebaseAuth,
+        _googleSignIn =
+            configured ? (googleSignIn ?? GoogleSignIn()) : googleSignIn;
+
+  @override
+  bool get isConfigured => _configured;
 
   AuthUser? _mapFirebaseUser(fb.User? user) {
     if (user == null) return null;
@@ -34,16 +43,26 @@ class FirebaseAuthRepository implements AuthRepository {
 
   @override
   Stream<AuthUser?> get authStateChanges {
-    return _firebaseAuth.authStateChanges().map(_mapFirebaseUser);
+    if (!_configured) return Stream.value(null);
+    return _firebaseAuth!.authStateChanges().map(_mapFirebaseUser);
   }
 
   @override
-  AuthUser? get currentUser => _mapFirebaseUser(_firebaseAuth.currentUser);
+  AuthUser? get currentUser {
+    if (!_configured) return null;
+    return _mapFirebaseUser(_firebaseAuth!.currentUser);
+  }
 
   @override
   Future<AuthResult> signInWithGoogle() async {
+    if (!_configured) {
+      return const AuthResult.failure(
+        'Firebase is not configured. Continue locally or run FlutterFire setup.',
+      );
+    }
+
     try {
-      final googleUser = await _googleSignIn.signIn();
+      final googleUser = await _googleSignIn!.signIn();
       if (googleUser == null) {
         return const AuthResult.failure('Google sign-in was cancelled.');
       }
@@ -55,7 +74,7 @@ class FirebaseAuthRepository implements AuthRepository {
       );
 
       final userCredential =
-          await _firebaseAuth.signInWithCredential(credential);
+          await _firebaseAuth!.signInWithCredential(credential);
       final user = _mapFirebaseUser(userCredential.user);
       if (user != null) {
         return AuthResult.success(user);
@@ -70,6 +89,12 @@ class FirebaseAuthRepository implements AuthRepository {
 
   @override
   Future<AuthResult> signInWithApple() async {
+    if (!_configured) {
+      return const AuthResult.failure(
+        'Firebase is not configured. Continue locally or run FlutterFire setup.',
+      );
+    }
+
     try {
       final rawNonce = _generateNonce();
       final nonce = _sha256ofString(rawNonce);
@@ -88,7 +113,7 @@ class FirebaseAuthRepository implements AuthRepository {
       );
 
       final userCredential =
-          await _firebaseAuth.signInWithCredential(oauthCredential);
+          await _firebaseAuth!.signInWithCredential(oauthCredential);
 
       // Apple may only send display name on first sign-in.
       final displayName = [
@@ -121,6 +146,12 @@ class FirebaseAuthRepository implements AuthRepository {
 
   @override
   Future<AuthResult> signInWithMicrosoft() async {
+    if (!_configured) {
+      return const AuthResult.failure(
+        'Firebase is not configured. Continue locally or run FlutterFire setup.',
+      );
+    }
+
     // TODO: Implement Microsoft sign-in via OAuthProvider('microsoft.com').
     // Steps to implement:
     // 1. Register the app in Azure AD / Microsoft Identity Platform.
@@ -141,9 +172,11 @@ class FirebaseAuthRepository implements AuthRepository {
 
   @override
   Future<void> signOut() async {
+    if (!_configured) return;
+
     await Future.wait([
-      _firebaseAuth.signOut(),
-      _googleSignIn.signOut(),
+      _firebaseAuth!.signOut(),
+      _googleSignIn!.signOut(),
     ]);
   }
 

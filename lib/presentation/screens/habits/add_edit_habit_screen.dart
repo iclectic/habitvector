@@ -63,11 +63,12 @@ class _AddEditHabitScreenState extends ConsumerState<AddEditHabitScreen> {
     super.initState();
     final h = widget.existingHabit;
     _titleController = TextEditingController(text: h?.title ?? '');
-    _descriptionController =
-        TextEditingController(text: h?.description ?? '');
+    _descriptionController = TextEditingController(text: h?.description ?? '');
     _targetController = TextEditingController(
       text: h?.targetQuantity?.toStringAsFixed(
-              h.targetQuantity!.truncateToDouble() == h.targetQuantity ? 0 : 1) ??
+              h.targetQuantity!.truncateToDouble() == h.targetQuantity
+                  ? 0
+                  : 1) ??
           '',
     );
     _unitController = TextEditingController(text: h?.unit ?? '');
@@ -207,7 +208,9 @@ class _AddEditHabitScreenState extends ConsumerState<AddEditHabitScreen> {
                     ),
                     child: Icon(
                       icon,
-                      color: selected ? _selectedColour : theme.colorScheme.onSurface.withOpacity(0.6),
+                      color: selected
+                          ? _selectedColour
+                          : theme.colorScheme.onSurface.withOpacity(0.6),
                       size: 22,
                     ),
                   ),
@@ -249,7 +252,8 @@ class _AddEditHabitScreenState extends ConsumerState<AddEditHabitScreen> {
             const SizedBox(height: AppTheme.spacingMd),
 
             // Schedule details
-            if (_scheduleType == ScheduleType.specificDays) _buildDayPicker(theme),
+            if (_scheduleType == ScheduleType.specificDays)
+              _buildDayPicker(theme),
             if (_scheduleType == ScheduleType.customFrequency)
               _buildFrequencyPicker(theme),
             const SizedBox(height: AppTheme.spacingLg),
@@ -435,8 +439,7 @@ class _AddEditHabitScreenState extends ConsumerState<AddEditHabitScreen> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (_scheduleType == ScheduleType.specificDays &&
-        _scheduledDays.isEmpty) {
+    if (_scheduleType == ScheduleType.specificDays && _scheduledDays.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select at least one day.')),
       );
@@ -446,8 +449,6 @@ class _AddEditHabitScreenState extends ConsumerState<AddEditHabitScreen> {
     HapticFeedback.mediumImpact();
 
     final habitUseCases = ref.read(habitUseCasesProvider);
-    final notificationService = ref.read(notificationServiceProvider);
-
     try {
       if (_isEditing) {
         final updated = widget.existingHabit!.copyWith(
@@ -474,9 +475,8 @@ class _AddEditHabitScreenState extends ConsumerState<AddEditHabitScreen> {
           updatedAt: DateTime.now(),
         );
         await habitUseCases.updateHabit(updated);
-        await notificationService.scheduleHabitReminders(updated);
       } else {
-        final habit = await habitUseCases.createHabit(
+        await habitUseCases.createHabit(
           title: _titleController.text.trim(),
           description: _descriptionController.text.trim().isEmpty
               ? null
@@ -495,7 +495,6 @@ class _AddEditHabitScreenState extends ConsumerState<AddEditHabitScreen> {
               : null,
           reminderTimes: _reminderTimes,
         );
-        await notificationService.scheduleHabitReminders(habit);
       }
 
       if (mounted) {

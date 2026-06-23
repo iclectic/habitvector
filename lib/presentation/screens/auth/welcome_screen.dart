@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/auth_providers.dart';
 import '../../widgets/habit_vector_logo.dart';
 import 'sign_in_screen.dart';
 
 /// Welcome screen shown to unauthenticated users.
 /// Displays branding and a call to action to sign in.
-class WelcomeScreen extends StatelessWidget {
+class WelcomeScreen extends ConsumerWidget {
   const WelcomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
     final isDark = theme.brightness == Brightness.dark;
+    final authConfigured = ref.watch(authControllerProvider).isAuthConfigured;
 
     return Scaffold(
       body: SafeArea(
@@ -22,9 +26,8 @@ class WelcomeScreen extends StatelessWidget {
               const Spacer(flex: 2),
               HabitVectorLogo(
                 size: size.width * 0.35,
-                primaryColor: isDark
-                    ? const Color(0xFF818CF8)
-                    : const Color(0xFF4F46E5),
+                primaryColor:
+                    isDark ? const Color(0xFF818CF8) : const Color(0xFF4F46E5),
               ),
               const SizedBox(height: 32),
               Text(
@@ -55,7 +58,19 @@ class WelcomeScreen extends StatelessWidget {
                       ),
                     );
                   },
-                  child: const Text('Get Started'),
+                  child: Text(authConfigured ? 'Sign In' : 'Set Up Locally'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: OutlinedButton(
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    ref.read(authControllerProvider.notifier).continueLocally();
+                  },
+                  child: const Text('Continue Without Sign-In'),
                 ),
               ),
               const SizedBox(height: 16),

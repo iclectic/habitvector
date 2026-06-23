@@ -116,8 +116,7 @@ class StreakCalculator {
     final scheduledDates = _scheduledDatesBackward(habit, 365);
     if (scheduledDates.isEmpty) return 0;
 
-    final completedSet =
-        completedLogs.map((l) => _normalise(l.date)).toSet();
+    final completedSet = completedLogs.map((l) => _normalise(l.date)).toSet();
 
     int streak = 0;
     for (final date in scheduledDates) {
@@ -136,8 +135,7 @@ class StreakCalculator {
     final scheduledDates = _scheduledDatesForward(habit, completedLogs);
     if (scheduledDates.isEmpty) return 0;
 
-    final completedSet =
-        completedLogs.map((l) => _normalise(l.date)).toSet();
+    final completedSet = completedLogs.map((l) => _normalise(l.date)).toSet();
 
     int longest = 0;
     int current = 0;
@@ -199,8 +197,7 @@ class StreakCalculator {
     for (final weekStart in sortedWeeks) {
       final count = weekCounts[weekStart] ?? 0;
       if (count >= target) {
-        if (prevWeek != null &&
-            weekStart.difference(prevWeek).inDays == 7) {
+        if (prevWeek != null && weekStart.difference(prevWeek).inDays == 7) {
           current++;
         } else {
           current = 1;
@@ -230,8 +227,7 @@ class StreakCalculator {
     int completedCount = 0;
 
     final completedLogs = _completedLogs(habit, allLogs);
-    final completedSet =
-        completedLogs.map((l) => _normalise(l.date)).toSet();
+    final completedSet = completedLogs.map((l) => _normalise(l.date)).toSet();
 
     for (int i = 0; i < days; i++) {
       final date = start.add(Duration(days: i));

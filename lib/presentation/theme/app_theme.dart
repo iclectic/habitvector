@@ -169,7 +169,8 @@ class AppTheme {
       unselectedItemColor: Color(0xFF94A3B8),
       type: BottomNavigationBarType.fixed,
       elevation: 8,
-      selectedLabelStyle: TextStyle(fontFamily: 'Inter', fontSize: 12, fontWeight: FontWeight.w500),
+      selectedLabelStyle: TextStyle(
+          fontFamily: 'Inter', fontSize: 12, fontWeight: FontWeight.w500),
       unselectedLabelStyle: TextStyle(fontFamily: 'Inter', fontSize: 12),
     ),
     floatingActionButtonTheme: FloatingActionButtonThemeData(
@@ -319,7 +320,8 @@ class AppTheme {
       unselectedItemColor: Color(0xFF64748B),
       type: BottomNavigationBarType.fixed,
       elevation: 8,
-      selectedLabelStyle: TextStyle(fontFamily: 'Inter', fontSize: 12, fontWeight: FontWeight.w500),
+      selectedLabelStyle: TextStyle(
+          fontFamily: 'Inter', fontSize: 12, fontWeight: FontWeight.w500),
       unselectedLabelStyle: TextStyle(fontFamily: 'Inter', fontSize: 12),
     ),
     floatingActionButtonTheme: FloatingActionButtonThemeData(

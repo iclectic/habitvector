@@ -15,10 +15,12 @@ class Habits extends Table {
   TextColumn get description => text().nullable()();
   IntColumn get colourValue => integer()();
   IntColumn get iconCodePoint => integer()();
-  TextColumn get iconFontFamily => text().withDefault(const Constant('MaterialIcons'))();
+  TextColumn get iconFontFamily =>
+      text().withDefault(const Constant('MaterialIcons'))();
   IntColumn get scheduleType => integer()();
   TextColumn get scheduledDays => text().withDefault(const Constant('[]'))();
-  IntColumn get customFrequencyPerWeek => integer().withDefault(const Constant(1))();
+  IntColumn get customFrequencyPerWeek =>
+      integer().withDefault(const Constant(1))();
   IntColumn get goalType => integer()();
   RealColumn get targetQuantity => real().nullable()();
   TextColumn get unit => text().nullable()();

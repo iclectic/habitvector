@@ -10,6 +10,8 @@ class DriftHabitRepository implements HabitRepository {
 
   DriftHabitRepository(this._db);
 
+  AppDatabase get database => _db;
+
   @override
   Future<List<Habit>> getAllHabits() async {
     final rows = await _db.select(_db.habits).get();
@@ -26,8 +28,7 @@ class DriftHabitRepository implements HabitRepository {
 
   @override
   Future<List<Habit>> getArchivedHabits() async {
-    final query = _db.select(_db.habits)
-      ..where((h) => h.archived.equals(true));
+    final query = _db.select(_db.habits)..where((h) => h.archived.equals(true));
     final rows = await query.get();
     return rows.map(HabitMapper.toDomain).toList();
   }

@@ -93,8 +93,7 @@ class _HabitsListScreenState extends ConsumerState<HabitsListScreen> {
           // Filter chips
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding:
-                const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd),
+            padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd),
             child: Row(
               children: ScheduleFilter.values.map((filter) {
                 final selected = _scheduleFilter == filter;
@@ -103,8 +102,7 @@ class _HabitsListScreenState extends ConsumerState<HabitsListScreen> {
                   child: FilterChip(
                     label: Text(_filterLabel(filter)),
                     selected: selected,
-                    onSelected: (_) =>
-                        setState(() => _scheduleFilter = filter),
+                    onSelected: (_) => setState(() => _scheduleFilter = filter),
                   ),
                 );
               }).toList(),
@@ -114,12 +112,9 @@ class _HabitsListScreenState extends ConsumerState<HabitsListScreen> {
           // Habits list
           Expanded(
             child: habitsAsync.when(
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
+              loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(child: Text('Error: $e')),
-              data: (habitsRaw) {
-                var habits = habitsRaw.cast<Habit>();
-
+              data: (habits) {
                 // Apply search
                 if (_searchQuery.isNotEmpty) {
                   final query = _searchQuery.toLowerCase();
@@ -140,16 +135,14 @@ class _HabitsListScreenState extends ConsumerState<HabitsListScreen> {
                 if (habits.isEmpty) {
                   return Center(
                     child: Padding(
-                      padding:
-                          const EdgeInsets.all(AppTheme.spacingXl),
+                      padding: const EdgeInsets.all(AppTheme.spacingXl),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
                             Icons.search_off_rounded,
                             size: 48,
-                            color: theme.colorScheme.onSurface
-                                .withOpacity(0.3),
+                            color: theme.colorScheme.onSurface.withOpacity(0.3),
                           ),
                           const SizedBox(height: AppTheme.spacingMd),
                           Text(
@@ -158,8 +151,8 @@ class _HabitsListScreenState extends ConsumerState<HabitsListScreen> {
                                 : 'No habits yet. Tap + to create one.',
                             textAlign: TextAlign.center,
                             style: theme.textTheme.bodyLarge?.copyWith(
-                              color: theme.colorScheme.onSurface
-                                  .withOpacity(0.6),
+                              color:
+                                  theme.colorScheme.onSurface.withOpacity(0.6),
                             ),
                           ),
                         ],
@@ -325,8 +318,7 @@ class _HabitListItem extends StatelessWidget {
         return 'Daily';
       case ScheduleType.specificDays:
         final dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-        final days =
-            habit.scheduledDays.map((d) => dayNames[d - 1]).join(', ');
+        final days = habit.scheduledDays.map((d) => dayNames[d - 1]).join(', ');
         return days;
       case ScheduleType.customFrequency:
         return '${habit.customFrequencyPerWeek}x per week';

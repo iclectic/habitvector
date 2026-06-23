@@ -160,8 +160,7 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
             const SizedBox(height: AppTheme.spacingLg),
 
             // Description
-            if (habit.description != null &&
-                habit.description!.isNotEmpty) ...[
+            if (habit.description != null && habit.description!.isNotEmpty) ...[
               Text(
                 'Description',
                 style: theme.textTheme.titleMedium
@@ -388,9 +387,7 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
       HapticFeedback.heavyImpact();
       final habitUseCases = ref.read(habitUseCasesProvider);
       final logUseCases = ref.read(logUseCasesProvider);
-      final notificationService = ref.read(notificationServiceProvider);
 
-      await notificationService.cancelHabitReminders(widget.habitId);
       await logUseCases.deleteLogsForHabit(widget.habitId);
       await habitUseCases.deleteHabit(widget.habitId);
 

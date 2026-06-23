@@ -29,7 +29,6 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
-pubspec.lock
 
 # Symbolication related
 app.*.symbols
@@ -46,3 +45,6 @@ app.*.map.json
 *.g.dart
 *.freezed.dart
 *.drift.dart
+
+# Compound Engineering local config
+.compound-engineering/*.local.yaml

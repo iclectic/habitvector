@@ -24,7 +24,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
     // Listen for errors and show snackbar
     ref.listen<AuthState>(authControllerProvider, (prev, next) {
-      if (next.errorMessage != null && next.errorMessage != prev?.errorMessage) {
+      if (next.errorMessage != null &&
+          next.errorMessage != prev?.errorMessage) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(next.errorMessage!),
@@ -53,9 +54,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
               const Spacer(flex: 1),
               HabitVectorLogo(
                 size: 80,
-                primaryColor: isDark
-                    ? const Color(0xFF818CF8)
-                    : const Color(0xFF4F46E5),
+                primaryColor:
+                    isDark ? const Color(0xFF818CF8) : const Color(0xFF4F46E5),
               ),
               const SizedBox(height: 24),
               Text(
@@ -66,10 +66,13 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Choose your preferred sign-in method',
+                authState.isAuthConfigured
+                    ? 'Choose your preferred sign-in method'
+                    : 'Firebase is not configured. You can continue locally.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurface.withOpacity(0.6),
                 ),
+                textAlign: TextAlign.center,
               ),
               const Spacer(flex: 1),
 
@@ -82,7 +85,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
               // Google sign-in button
               _SignInButton(
-                onPressed: authState.isLoading
+                onPressed: authState.isLoading || !authState.isAuthConfigured
                     ? null
                     : () {
                         HapticFeedback.lightImpact();
@@ -92,22 +95,19 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                       },
                 icon: _googleIcon(isDark),
                 label: 'Continue with Google',
-                backgroundColor: isDark
-                    ? const Color(0xFF1E293B)
-                    : Colors.white,
-                foregroundColor: isDark
-                    ? const Color(0xFFF8FAFC)
-                    : const Color(0xFF1F2937),
-                borderColor: isDark
-                    ? const Color(0xFF334155)
-                    : const Color(0xFFE2E8F0),
+                backgroundColor:
+                    isDark ? const Color(0xFF1E293B) : Colors.white,
+                foregroundColor:
+                    isDark ? const Color(0xFFF8FAFC) : const Color(0xFF1F2937),
+                borderColor:
+                    isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
               ),
               const SizedBox(height: 12),
 
               // Apple sign-in button (iOS and macOS)
               if (Platform.isIOS || Platform.isMacOS) ...[
                 _SignInButton(
-                  onPressed: authState.isLoading
+                  onPressed: authState.isLoading || !authState.isAuthConfigured
                       ? null
                       : () {
                           HapticFeedback.lightImpact();
@@ -127,27 +127,32 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                 const SizedBox(height: 12),
               ],
 
-              // Microsoft sign-in button (scaffolded)
               _SignInButton(
-                onPressed: authState.isLoading
-                    ? null
-                    : () {
-                        HapticFeedback.lightImpact();
-                        ref
-                            .read(authControllerProvider.notifier)
-                            .signInWithMicrosoft();
-                      },
+                onPressed: null,
                 icon: _microsoftIcon(),
-                label: 'Continue with Microsoft',
-                backgroundColor: isDark
-                    ? const Color(0xFF1E293B)
-                    : Colors.white,
-                foregroundColor: isDark
-                    ? const Color(0xFFF8FAFC)
-                    : const Color(0xFF1F2937),
-                borderColor: isDark
-                    ? const Color(0xFF334155)
-                    : const Color(0xFFE2E8F0),
+                label: 'Microsoft sign-in coming later',
+                backgroundColor:
+                    isDark ? const Color(0xFF1E293B) : Colors.white,
+                foregroundColor:
+                    isDark ? const Color(0xFFF8FAFC) : const Color(0xFF1F2937),
+                borderColor:
+                    isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: OutlinedButton(
+                  onPressed: authState.isLoading
+                      ? null
+                      : () {
+                          HapticFeedback.lightImpact();
+                          ref
+                              .read(authControllerProvider.notifier)
+                              .continueLocally();
+                        },
+                  child: const Text('Continue Without Sign-In'),
+                ),
               ),
 
               const Spacer(flex: 2),

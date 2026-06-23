@@ -3,6 +3,8 @@ import '../../domain/entities/habit.dart';
 import '../../domain/entities/habit_log.dart';
 import '../../domain/repositories/habit_repository.dart';
 import '../../domain/repositories/habit_log_repository.dart';
+import '../../data/repositories/drift_habit_repository.dart';
+import '../../data/repositories/drift_habit_log_repository.dart';
 
 /// Data transfer object for export/import.
 class ExportData {
@@ -15,7 +17,7 @@ class ExportData {
     required this.habits,
     required this.logs,
     required this.exportedAt,
-    this.version = '1.0.0',
+    this.version = ExportImportUseCases.supportedVersion,
   });
 
   Map<String, dynamic> toJson() {
@@ -29,7 +31,8 @@ class ExportData {
 
   factory ExportData.fromJson(Map<String, dynamic> json) {
     return ExportData(
-      version: json['version'] as String? ?? '1.0.0',
+      version:
+          json['version'] as String? ?? ExportImportUseCases.supportedVersion,
       exportedAt: DateTime.parse(json['exportedAt'] as String),
       habits: (json['habits'] as List<dynamic>)
           .map((h) => Habit.fromJson(h as Map<String, dynamic>))
@@ -56,6 +59,8 @@ class ImportValidation {
 
 /// Use cases for data export and import.
 class ExportImportUseCases {
+  static const supportedVersion = '1.0.0';
+
   final HabitRepository _habitRepository;
   final HabitLogRepository _logRepository;
 
@@ -96,6 +101,13 @@ class ExportImportUseCases {
         errors.add('Missing "exportedAt" field.');
       }
 
+      final version = json['version'] as String? ?? supportedVersion;
+      if (version != supportedVersion) {
+        errors.add(
+          'Unsupported backup version "$version". Expected "$supportedVersion".',
+        );
+      }
+
       if (errors.isNotEmpty) {
         return ImportValidation(isValid: false, errors: errors);
       }
@@ -114,10 +126,17 @@ class ExportImportUseCases {
 
       // Validate logs reference existing habits
       final habitIds = data.habits.map((h) => h.id).toSet();
+      final logKeys = <String>{};
       for (final log in data.logs) {
         if (!habitIds.contains(log.habitId)) {
           errors.add(
               'Log ${log.id} references non-existent habit ${log.habitId}.');
+        }
+        final key = '${log.habitId}:${log.normalisedDate.toIso8601String()}';
+        if (!logKeys.add(key)) {
+          errors.add(
+            'Multiple logs found for habit ${log.habitId} on ${log.normalisedDate.toIso8601String()}.',
+          );
         }
       }
 
@@ -139,29 +158,43 @@ class ExportImportUseCases {
   Future<void> importFromJson(String jsonString) async {
     final validation = validateJson(jsonString);
     if (!validation.isValid || validation.data == null) {
-      throw Exception(
-          'Invalid import data: ${validation.errors.join(', ')}');
+      throw Exception('Invalid import data: ${validation.errors.join(', ')}');
     }
 
     final data = validation.data!;
 
-    for (final habit in data.habits) {
-      final existing = await _habitRepository.getHabitById(habit.id);
-      if (existing != null) {
-        await _habitRepository.updateHabit(habit);
-      } else {
-        await _habitRepository.insertHabit(habit);
+    Future<void> persist() async {
+      for (final habit in data.habits) {
+        final existing = await _habitRepository.getHabitById(habit.id);
+        if (existing != null) {
+          await _habitRepository.updateHabit(habit);
+        } else {
+          await _habitRepository.insertHabit(habit);
+        }
+      }
+
+      for (final log in data.logs) {
+        final existing =
+            await _logRepository.getLogForHabitOnDate(log.habitId, log.date);
+        if (existing != null) {
+          await _logRepository.updateLog(log);
+        } else {
+          await _logRepository.insertLog(log);
+        }
       }
     }
 
-    for (final log in data.logs) {
-      final existing =
-          await _logRepository.getLogForHabitOnDate(log.habitId, log.date);
-      if (existing != null) {
-        await _logRepository.updateLog(log);
-      } else {
-        await _logRepository.insertLog(log);
-      }
+    if (_habitRepository is DriftHabitRepository &&
+        _logRepository is DriftHabitLogRepository &&
+        identical(
+          _habitRepository.database,
+          _logRepository.database,
+        )) {
+      final db = _habitRepository.database;
+      await db.transaction(persist);
+      return;
     }
+
+    await persist();
   }
 }

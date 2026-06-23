@@ -35,7 +35,8 @@ class LogUseCases {
     final normalised =
         DateTime(targetDate.year, targetDate.month, targetDate.day);
 
-    final existing = await _repository.getLogForHabitOnDate(habitId, normalised);
+    final existing =
+        await _repository.getLogForHabitOnDate(habitId, normalised);
     if (existing != null) {
       final updated = existing.copyWith(completed: true, skipped: false);
       await _repository.updateLog(updated);
@@ -59,7 +60,8 @@ class LogUseCases {
     final normalised =
         DateTime(targetDate.year, targetDate.month, targetDate.day);
 
-    final existing = await _repository.getLogForHabitOnDate(habitId, normalised);
+    final existing =
+        await _repository.getLogForHabitOnDate(habitId, normalised);
     if (existing != null) {
       await _repository.deleteLog(existing.id);
     }
@@ -80,7 +82,8 @@ class LogUseCases {
         ? value >= habit.targetQuantity!
         : value > 0;
 
-    final existing = await _repository.getLogForHabitOnDate(habitId, normalised);
+    final existing =
+        await _repository.getLogForHabitOnDate(habitId, normalised);
     if (existing != null) {
       final updated = existing.copyWith(
         value: value,
@@ -109,10 +112,10 @@ class LogUseCases {
     final normalised =
         DateTime(targetDate.year, targetDate.month, targetDate.day);
 
-    final existing = await _repository.getLogForHabitOnDate(habitId, normalised);
+    final existing =
+        await _repository.getLogForHabitOnDate(habitId, normalised);
     if (existing != null) {
-      final updated =
-          existing.copyWith(skipped: true, completed: false);
+      final updated = existing.copyWith(skipped: true, completed: false);
       await _repository.updateLog(updated);
       return updated;
     }

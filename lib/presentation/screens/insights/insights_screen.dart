@@ -213,8 +213,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                       '${value.toInt()}%',
                       style: theme.textTheme.bodySmall?.copyWith(
                         fontSize: 10,
-                        color:
-                            theme.colorScheme.onSurface.withOpacity(0.5),
+                        color: theme.colorScheme.onSurface.withOpacity(0.5),
                       ),
                     ),
                   ),
@@ -227,39 +226,41 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                     getTitlesWidget: (value, _) {
                       if (_showMonthly) {
                         final dayIndex = (days - 1 - value.toInt());
-                        final date =
-                            today.subtract(Duration(days: dayIndex));
+                        final date = today.subtract(Duration(days: dayIndex));
                         return Text(
                           '${date.day}/${date.month}',
                           style: theme.textTheme.bodySmall?.copyWith(
                             fontSize: 9,
-                            color: theme.colorScheme.onSurface
-                                .withOpacity(0.5),
+                            color: theme.colorScheme.onSurface.withOpacity(0.5),
                           ),
                         );
                       } else {
                         final dayNames = [
-                          'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'
+                          'Mon',
+                          'Tue',
+                          'Wed',
+                          'Thu',
+                          'Fri',
+                          'Sat',
+                          'Sun'
                         ];
                         final dayIndex = (days - 1 - value.toInt());
-                        final date =
-                            today.subtract(Duration(days: dayIndex));
+                        final date = today.subtract(Duration(days: dayIndex));
                         return Text(
                           dayNames[date.weekday - 1],
                           style: theme.textTheme.bodySmall?.copyWith(
                             fontSize: 10,
-                            color: theme.colorScheme.onSurface
-                                .withOpacity(0.5),
+                            color: theme.colorScheme.onSurface.withOpacity(0.5),
                           ),
                         );
                       }
                     },
                   ),
                 ),
-                topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false)),
-                rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false)),
+                topTitles:
+                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles:
+                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
               ),
               borderData: FlBorderData(show: false),
               minX: 0,
@@ -444,8 +445,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
     );
   }
 
-  Widget _miniStat(
-      ThemeData theme, String label, String value, IconData icon) {
+  Widget _miniStat(ThemeData theme, String label, String value, IconData icon) {
     return Column(
       children: [
         Icon(icon, color: theme.colorScheme.primary, size: 24),

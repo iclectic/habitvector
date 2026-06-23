@@ -58,8 +58,7 @@ class CalendarHeatmap extends StatelessWidget {
                       child: Text(
                         d,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color:
-                              theme.colorScheme.onSurface.withOpacity(0.4),
+                          color: theme.colorScheme.onSurface.withOpacity(0.4),
                           fontSize: 10,
                         ),
                       ),
@@ -90,8 +89,7 @@ class CalendarHeatmap extends StatelessWidget {
                           child: _weekLabel(theme, weekStart),
                         ),
                         ...List.generate(7, (dayIndex) {
-                          final date =
-                              weekStart.add(Duration(days: dayIndex));
+                          final date = weekStart.add(Duration(days: dayIndex));
                           final isBeforeStart = date.isBefore(startDate);
                           final isAfterToday = date.isAfter(today);
                           final isCompleted = completedDates.contains(date);
@@ -118,8 +116,7 @@ class CalendarHeatmap extends StatelessWidget {
                                                   : theme.colorScheme
                                                       .surfaceContainerHighest
                                                       .withOpacity(0.5),
-                                      borderRadius:
-                                          BorderRadius.circular(3),
+                                      borderRadius: BorderRadius.circular(3),
                                     ),
                                   ),
                                 ),
@@ -144,8 +141,8 @@ class CalendarHeatmap extends StatelessWidget {
                   theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
                 ),
                 const SizedBox(width: AppTheme.spacingMd),
-                _legendItem(theme, 'Skipped',
-                    AppTheme.warningColour.withOpacity(0.3)),
+                _legendItem(
+                    theme, 'Skipped', AppTheme.warningColour.withOpacity(0.3)),
                 const SizedBox(width: AppTheme.spacingMd),
                 _legendItem(theme, 'Done', colour),
               ],
@@ -170,8 +167,18 @@ class CalendarHeatmap extends StatelessWidget {
       final date = weekStart.add(Duration(days: i));
       if (date.day <= 7 && date.day >= 1) {
         final months = [
-          'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dec'
         ];
         return Text(
           months[date.month - 1],

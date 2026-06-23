@@ -91,9 +91,8 @@ class _HabitTileState extends State<HabitTile>
                         widget.habit.title,
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w600,
-                          decoration: isCompleted
-                              ? TextDecoration.lineThrough
-                              : null,
+                          decoration:
+                              isCompleted ? TextDecoration.lineThrough : null,
                           color: isCompleted
                               ? theme.colorScheme.onSurface.withOpacity(0.5)
                               : null,
@@ -121,7 +120,8 @@ class _HabitTileState extends State<HabitTile>
                         tooltip: 'Skip',
                         visualDensity: VisualDensity.compact,
                       ),
-                    _buildMainAction(theme, isCompleted, isSkipped, habitColour),
+                    _buildMainAction(
+                        theme, isCompleted, isSkipped, habitColour),
                   ],
                 ),
               ],
