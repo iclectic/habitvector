@@ -1,250 +1,236 @@
-# Habit Vector
+# HabitVector Adaptive Lab
 
-A production-quality Flutter habit tracker focused on daily consistency, streaks, and simple insights. Offline-first, private, and beautifully designed with optional Firebase authentication.
+> **A privacy-first, explainable habit experimentation platform for people with irregular schedules.**
 
-## Features
+[![CI](https://github.com/YOUR_USERNAME/habitvector/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/habitvector/actions/workflows/ci.yml)
+![Flutter](https://img.shields.io/badge/Flutter-3.22-blue?logo=flutter)
+![Tests](https://img.shields.io/badge/tests-259%20passing-brightgreen)
+![License](https://img.shields.io/badge/license-personal%20use-lightgrey)
 
-- **Authentication**: Continue locally without sign-in, or sign in with Google/Apple via Firebase Auth once configured
-- **Habit Tracking**: Create tick (yes/no) or quantity-based habits with flexible scheduling (daily, specific days, or x times per week)
-- **Streaks**: Automatic streak calculation for each schedule type with current and longest streak tracking
-- **Insights**: Weekly and monthly completion charts, best/struggling habits, completion rates over 7/30/90 days
-- **Calendar Heatmap**: Visual 90-day history per habit
-- **Reminders**: Local notifications with timezone-safe scheduling and multiple reminder times per habit
-- **Data Export/Import**: Full JSON backup and restore with validation
-- **Onboarding**: Optional sample habits to get started quickly
-- **Theming**: System, light, and dark modes with a consistent design system, persisted via shared_preferences
-- **Branding**: Custom vector logo (CustomPainter + SVG), animated splash screen
-- **Accessibility**: Semantic labels, scalable text, contrast-aware themes
-- **Haptic Feedback**: Tactile response on key actions
+---
+
+## Why HabitVector?
+
+Standard habit trackers are built for people with consistent schedules. They fail shift workers, carers, students, freelancers, and parents — anyone whose context changes day to day. A broken streak on a night-shift day is not failure; it is noise.
+
+HabitVector solves this by treating habit-building as a **personal experiment**:
+
+- It learns which contextual conditions (energy, workload, shift type) make a habit achievable for _you_.
+- It suggests the right _version_ of a habit — minimum, standard, or stretch — based on today's context.
+- It explains every recommendation in plain language.
+- It lets you run structured N-of-1 experiments and read the results without causal overreach.
+- It celebrates recovery as much as streaks.
+- It never sends your data anywhere without explicit consent.
+
+---
+
+## Architecture
+
+Six-phase clean architecture with four layers:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Presentation  (Flutter widgets, Riverpod providers)     │
+├─────────────────────────────────────────────────────────┤
+│  Application   (Use cases, engines, analysers)           │
+├─────────────────────────────────────────────────────────┤
+│  Domain        (Entities, repository interfaces, Clock)  │
+├─────────────────────────────────────────────────────────┤
+│  Data          (Drift/SQLite, mappers, Firebase Auth)    │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Key decisions** → see `docs/architecture-decisions/`
+
+| ADR | Decision |
+|-----|----------|
+| [ADR-001](docs/architecture-decisions/ADR-001-clean-architecture.md) | Clean architecture with four layers |
+| [ADR-004](docs/architecture-decisions/ADR-004-additive-migrations.md) | Additive-only SQLite migrations |
+| [ADR-005](docs/architecture-decisions/ADR-005-local-recommendation-engine.md) | Local-first on-device ML |
+| [ADR-006](docs/architecture-decisions/ADR-006-experiment-privacy-data-retention.md) | Experiment privacy and data retention |
+| [ADR-007](docs/architecture-decisions/ADR-007-accessibility-commitment.md) | WCAG 2.1 AA accessibility commitment |
+
+---
 
 ## Tech Stack
 
-- **Flutter** (stable channel)
-- **State Management**: Riverpod (StateNotifier, StreamProvider, Provider)
-- **Authentication**: Optional Firebase Auth (Google, Apple; Microsoft deferred)
-- **Local Storage**: Drift (SQLite)
-- **Charts**: fl_chart
-- **Notifications**: flutter_local_notifications with timezone support
-- **Splash**: flutter_native_splash (light + dark)
-- **SVG**: flutter_svg
-- **Architecture**: Clean architecture with layered separation
+| Layer | Technology |
+|-------|-----------|
+| UI framework | Flutter 3.22 (stable) |
+| State management | Riverpod 2.x (`Provider`, `StreamProvider`, `StateNotifier`) |
+| Local storage | Drift 2.x (SQLite, type-safe queries, in-memory testing) |
+| Auth (optional) | Firebase Auth — Google + Apple sign-in |
+| Charts | fl_chart |
+| Notifications | flutter_local_notifications |
+| CI | GitHub Actions (analyze + test + APK + iOS build) |
+
+---
+
+## Phase Breakdown
+
+### Phase 0 — Foundations
+Core entities, schema v1, clean architecture scaffolding, ADRs, product vision doc.
+
+### Phase 1 — Schema v2 + New Repositories *(99 tests)*
+Added `DailyCheckIn`, `WorkShift`, `HabitVersions`, `AdaptiveRecommendation`, `HabitExperiment` entities. Drift schema v2 with additive migration. New repositories with full CRUD + streaming. Riverpod providers wired.
+
+### Phase 2 — Cold-Start Rules + Context *(143 tests)*
+`ContextFeatureBuilder` extracts energy, workload, shift type, consecutive misses from raw data. `ColdStartRules` applies 8 deterministic rules to produce an `AdaptiveRecommendation`. `RecommendationEngine` caches recommendations by habit + date. `CheckInUseCases` manages daily context entry.
+
+### Phase 3 — Personalised Scoring + Recovery *(185 tests)*
+`RecoveryAnalysisService` tracks miss-run lengths and recovery rates from log history. `PersonalisedScorer` applies Bayesian-style weighted scoring across six context features (energy 25%, workload 20%, recent rate 20%, recovery 15%, time 10%, day type 10%). `RecommendationEngine` routes to cold-start below 14 completions, personalised scorer above.
+
+### Phase 4 — Experiment Engine + Friction Analysis *(243 tests)*
+`AssignmentEngine` — alternating (deterministic) and randomised (seeded by `hash(experimentId + index)`) arm assignment. `ExperimentAnalyser` — per-arm completion rates, four evidence levels (insufficient → weak → moderate → strong), non-causal conclusion language. `ExperimentUseCases` — full lifecycle (`draft → active → paused → completed | cancelled`), duplicate date guard, auto-analysis on completion. `FrictionAnalyser` — detects 6 friction categories from log history (day-of-week clusters, weekend drift, Monday friction, high skip rate, energy/workload correlations), sorted by intensity.
+
+### Phase 5 — Privacy + Accessibility *(259 tests)*
+`PrivacyConsentService` — analytics opt-in (defaults off), policy version stamping, `clearConsentFlags()` for data deletion. Privacy section in Settings — analytics toggle + Delete All Data (two-step confirmation). Accessibility audit — `Semantics` labels on all interactive widgets (`HabitTile`, toggle, skip, `SummaryCard`), `excludeSemantics` on composite widgets, WCAG 2.1 AA baseline documented in ADR-007.
+
+### Phase 6 — CI + Demo Data + Portfolio *(this phase)*
+GitHub Actions CI — analyze, test with coverage, debug APK build, iOS no-sign build. `DemoDataSeeder` — 30-day realistic history, 3 habits, 30 check-ins, 6 night shifts, 1 completed experiment, 1 active experiment. `.gitignore` updated for Firebase secrets, signing keys, coverage. Portfolio README (this document).
+
+---
 
 ## Project Structure
 
 ```
 lib/
-  domain/                  # Domain layer (pure Dart, no framework deps)
-    entities/              # Habit, HabitLog, StreakInfo
-    repositories/          # Abstract interfaces: HabitRepository, HabitLogRepository, AuthRepository
-  data/                    # Data layer (framework-dependent)
-    database/              # Drift database definition and generated code
-    mappers/               # Domain <-> DB mappers
-    repositories/          # DriftHabitRepository, DriftHabitLogRepository, FirebaseAuthRepository
-    services/              # Notification service
-  application/             # Application layer (use cases + controllers)
-    auth/                  # AuthController (StateNotifier)
-    use_cases/             # StreakCalculator, HabitUseCases, LogUseCases, ExportImport
-  presentation/            # Presentation layer (Flutter UI)
-    providers/             # Riverpod providers: providers.dart, auth_providers.dart, theme_provider.dart
-    theme/                 # AppTheme (colours, typography, spacing)
-    widgets/               # Shared widgets: HabitVectorLogo
-    screens/
-      auth/                # WelcomeScreen, SignInScreen
-      splash/              # AnimatedSplashScreen (post-native-splash animation)
-      onboarding/          # Onboarding flow
-      shell/               # Bottom navigation shell
-      home/                # Today dashboard with summary cards and habit tiles
-        widgets/           # HabitTile, SummaryCard
-      habits/              # Habits list, add/edit, detail
-        widgets/           # CalendarHeatmap
-      insights/            # Charts and performance rankings
-      settings/            # Theme toggle (3-state), account, sign out, notifications, export/import
-assets/
-  images/                  # Splash PNGs (light + dark)
-  svg/                     # habit_vector_logo.svg
+  domain/
+    entities/          # Habit, HabitLog, DailyCheckIn, WorkShift, HabitVersions,
+                       # AdaptiveRecommendation, HabitExperiment, RecoveryMetrics
+    repositories/      # Abstract interfaces
+    services/          # Clock, PrivacyConsentService
+  data/
+    database/          # Drift schema v2 + migration
+    mappers/           # Domain ↔ DB row mappers
+    repositories/      # Drift implementations
+    services/          # NotificationService
+  application/
+    adaptive/          # ContextFeatureBuilder, ColdStartRules, PersonalisedScorer,
+                       # RecoveryAnalysisService, RecommendationEngine
+    experiments/       # AssignmentEngine, ExperimentAnalyser,
+                       # ExperimentUseCases, FrictionAnalyser
+    context/           # CheckInUseCases
+    use_cases/         # HabitUseCases, LogUseCases, StreakCalculator,
+                       # ExportImportUseCases, DemoDataSeeder
+    auth/              # AuthController
+  presentation/
+    providers/         # All Riverpod providers
+    theme/             # AppTheme (spacing, colours, typography)
+    screens/           # auth, splash, onboarding, shell, home, habits,
+                       # insights, settings
+    widgets/           # HabitVectorLogo
+docs/
+  architecture-decisions/   # ADR-001, 004, 005, 006, 007
+  plans/                    # Phase plans
+  product-vision.md
+  system-design.md
+  privacy-and-threat-model.md
+  innovation-thesis.md
 test/
-  application/             # Unit tests for streak calculation
-  data/                    # Repository read/write tests (in-memory DB)
-  presentation/            # Widget tests (mark done, add habit)
+  data/               # Repository + migration tests
+  domain/             # Entity unit tests, PrivacyConsentService
+  application/        # ColdStartRules, PersonalisedScorer, RecoveryAnalysis,
+                       # RecommendationEngine, AssignmentEngine, ExperimentAnalyser,
+                       # ExperimentUseCases, FrictionAnalyser
+  presentation/       # Widget tests
+.github/
+  workflows/
+    ci.yml            # Analyze + test + build
 ```
 
-## Setup Instructions
+---
+
+## Key Engineering Highlights
+
+### Explainable recommendations
+Every `AdaptiveRecommendation` includes `explanation`, `factorsUsed`, `factorsMissing`, and `alternativeAction`. No opaque scores — users can always see why a suggestion was made.
+
+### Non-causal experiment conclusions
+`ExperimentAnalyser` conclusions are reviewed against a language policy: "associated with", "observed", "tended to" — never "caused", "proved", or "significantly better". Enforced by tests in `experiment_analyser_test.dart`.
+
+### Testable time
+A `Clock` interface (`SystemClock` / `FixedClock`) is injected everywhere time-dependent logic runs, making all temporal behaviour deterministic in tests without mocking.
+
+### Deterministic seeded randomisation
+`AssignmentEngine` randomised strategy uses `hash(experimentId + index)` as a seed. The same experiment always produces the same arm sequence — reproducible across sessions and devices, no server needed.
+
+### In-memory Drift for tests
+All repository tests use `NativeDatabase.memory()` via `AppDatabase.forTesting()`. Tests are fully isolated, no disk I/O, no teardown race conditions.
+
+---
+
+## Getting Started
 
 ### Prerequisites
+- Flutter 3.22+ (stable channel): `flutter --version`
+- Dart 3.2+
+- Firebase CLI (optional): `dart pub global activate flutterfire_cli`
 
-1. **Flutter SDK** (stable channel, 3.16+)
-   ```
-   flutter --version
-   ```
-2. **Dart SDK** (3.2+, bundled with Flutter)
-3. **Firebase CLI** and **FlutterFire CLI** (optional, for Google/Apple auth setup)
-   ```
-   dart pub global activate flutterfire_cli
-   ```
+### Setup
 
-### Step-by-step
+```bash
+# 1. Install dependencies
+flutter pub get
 
-1. **Clone or copy the project** into your workspace.
+# 2. Generate Drift code
+dart run build_runner build --delete-conflicting-outputs
 
-2. **Install dependencies**:
-   ```bash
-   cd habit_tracker
-   flutter pub get
-   ```
+# 3. (Optional) Configure Firebase for Google/Apple sign-in
+flutterfire configure
 
-3. **Configure Firebase** (optional for local-only use):
-   ```bash
-   flutterfire configure
-   ```
-   This generates `lib/firebase_options.dart` and platform config files (`google-services.json`, `GoogleService-Info.plist`). The app falls back to local-only mode when Firebase is not configured.
+# 4. Run
+flutter run
 
-4. **Run code generation** (for Drift):
-   ```bash
-   dart run build_runner build
-   ```
-   Generated `*.g.dart` files are intentionally ignored and reproducible from this step. `pubspec.lock` is committed for reproducible app dependencies.
+# 5. Test
+flutter test
 
-5. **Generate native splash** (optional, for branded splash screen):
-   ```bash
-   dart run flutter_native_splash:create
-   ```
-   Replace placeholder PNGs in `assets/images/` with your actual 1152x1152 brand logos first.
-
-6. **Run on a device or emulator**:
-   ```bash
-   flutter run
-   ```
-
-7. **Run tests**:
-   ```bash
-   flutter test
-   ```
-
-### Platform-specific setup
-
-#### Android
-- **Minimum SDK**: 21 (set in `android/app/build.gradle.kts`)
-- **Firebase**: Place `google-services.json` in `android/app/` (generated by `flutterfire configure`)
-- **Google Sign-In**: Works out of the box with Firebase config
-- **Notification channel**: Created automatically
-
-#### iOS
-- **Firebase**: Place `GoogleService-Info.plist` in `ios/Runner/` (generated by `flutterfire configure`)
-- **Apple Sign-In**: Enable "Sign in with Apple" capability in Xcode:
-  1. Open `ios/Runner.xcworkspace` in Xcode
-  2. Select Runner target > Signing & Capabilities
-  3. Click "+ Capability" > "Sign in with Apple"
-  4. Also register the capability in Apple Developer Console > Certificates, Identifiers & Profiles
-- **Google Sign-In**: Add the `REVERSED_CLIENT_ID` from `GoogleService-Info.plist` as a URL scheme in Info.plist
-- **Background modes**: Already configured for `fetch` and `remote-notification`
-- **Notification permissions**: Requested at runtime
-
-## Authentication Architecture
-
-### Flow
-
-```
-main() -> AnimatedSplashScreen -> AuthGate -> WelcomeScreen (if unauthenticated)
-                                            -> OnboardingGate -> AppShell (if local-only or authenticated)
+# 6. Analyse
+flutter analyze
 ```
 
-### Key Components
+### Demo data
 
-- **`AuthRepository`** (interface): Defines `signInWithGoogle()`, `signInWithApple()`, `signInWithMicrosoft()`, `signOut()`, `authStateChanges`, and whether remote auth is configured
-- **`FirebaseAuthRepository`**: Concrete implementation using `firebase_auth`, `google_sign_in`, `sign_in_with_apple`
-- **`AuthController`** (StateNotifier): Manages `AuthState` with `status`, `user`, `isLoading`, `errorMessage`, and local-only continuation
-- **`AuthGate`** (widget): Route guard that redirects based on `AuthStatus`
-- **Microsoft sign-in**: Deferred until Azure AD and Firebase provider setup are available; the UI presents it as unavailable instead of a working sign-in path.
+To seed the app with 30 days of realistic data for a shift-worker persona:
 
-## Theming
+```dart
+// In a ConsumerWidget
+final seeder = ref.read(demoDataSeederProvider);
+await seeder.seed();
+```
 
-- **3-state toggle**: System default, Light, Dark
-- **Persisted** via `shared_preferences` using `ThemeNotifier` (StateNotifier)
-- **ColourScheme-based**: Uses `colorSchemeSeed` for Material 3 consistency
-- **Single source of truth**: `AppTheme` class defines spacing, radii, colours, typography
-- **SegmentedButton** in settings for clean theme selection
+To clear demo data:
 
-### Brand Colours
+```dart
+await seeder.clear();
+```
 
-| Role       | Light           | Dark            |
-|------------|-----------------|-----------------|
-| Primary    | `#4F46E5` (Indigo) | `#818CF8`    |
-| Surface    | `#F8FAFC`       | `#0F172A`       |
-| Card       | `#FFFFFF`       | `#1E293B`       |
-| Error      | `#EF4444`       | `#F87171`       |
-| Success    | `#22C55E`       | `#22C55E`       |
-| Warning    | `#F59E0B`       | `#F59E0B`       |
+---
 
-## Technical Overview
+## Privacy
 
-### Key Decisions
+All habit data, check-ins, recommendations, and experiment results are stored **on-device only** in SQLite. Nothing leaves the device unless you explicitly export or (optionally) enable Firebase Auth.
 
-1. **Riverpod over Bloc**: Compile-time safety, simpler boilerplate, natural DI container.
-2. **Drift (SQLite)**: Type-safe queries, migration support, in-memory testing.
-3. **Clean Architecture**: Four layers (domain, data, application, presentation) for testability.
-4. **Firebase Auth**: Industry-standard, handles OAuth complexity, supports multiple providers.
-5. **Offline-first**: All habit data is local SQLite. Auth is identity-only; no cloud data sync yet.
-6. **Performance**: StreamProviders + Drift reactive queries, IndexedStack tab preservation.
+- **Analytics**: off by default. Opt-in via Settings → Privacy.
+- **Delete all data**: Settings → Privacy → Delete All Data (two-step confirmation).
+- **Export**: plaintext JSON. The UI warns you before sharing.
 
-### Design System
+Full threat model: [`docs/privacy-and-threat-model.md`](docs/privacy-and-threat-model.md)
 
-- **Logo**: Upward vector arrow with accent dots (CustomPainter + SVG)
-- **Colours**: 12 preset habit colours, indigo primary, slate neutrals
-- **Typography**: Inter font family (system fallback)
-- **Spacing**: 4/8/16/24/32/48 scale
-- **Border Radius**: 8/12/16/24 scale
-- **Cards**: Outlined style (no elevation) for a clean, modern look
+---
 
-## Recommendations (Now vs Later)
+## CI
 
-### Now (implemented or ready)
+GitHub Actions runs on every push to `main` / `develop` and on all PRs:
 
-| Feature | Reason | Status |
-|---------|--------|--------|
-| Onboarding tips | First-run guidance reduces abandonment | Implemented |
-| Streaks + reminders | Core motivation loop | Implemented |
-| Local notifications | Permission flow included | Implemented |
-| Data export/import (JSON) | Users want data portability; validation rejects unsupported versions and duplicate same-day logs | Implemented |
-| Theme persistence | Expected UX; avoids re-selecting each launch | Implemented |
+| Job | What it does |
+|-----|-------------|
+| `analyze_and_test` | `dart format`, `flutter analyze --fatal-warnings`, `flutter test --coverage` |
+| `build_android` | Debug APK — uploads artifact (7-day retention) |
+| `build_ios` | `flutter build ios --no-codesign` on `macos-latest` |
 
-### Later (high value, moderate effort)
-
-| Feature | Reason | Outline |
-|---------|--------|---------|
-| CSV export | Spreadsheet users; add a `toCsv()` method on ExportImportUseCases | 1-2 hours |
-| Analytics events | Screen views, sign-in success; use `firebase_analytics` with privacy defaults | 2-3 hours |
-| Cloud backup | Encrypted JSON to Firebase Storage or iCloud; add `BackupRepository` interface | 1-2 days |
-| Microsoft sign-in | Complete the stubbed `signInWithMicrosoft()`; register in Azure AD + Firebase | 1-2 hours once Azure configured |
-| Widget (home screen) | iOS WidgetKit / Android Glance; shows today's completion | 1-2 days |
-| Habit templates | Pre-built packs; seed data in onboarding | 3-4 hours |
-
-## Verification Checklist
-
-- [ ] `flutter pub get` succeeds
-- [ ] `flutter analyze` reports no errors or warnings; current Flutter SDK may still report info-level deprecations in older UI code
-- [ ] `flutter test` passes all tests (streak, repository, auth, export/import, widget)
-- [ ] Android: App displays "Habit Vector" in launcher and app bar
-- [ ] iOS: App displays "Habit Vector" in launcher and app bar
-- [ ] Firebase initialises without error (after `flutterfire configure`)
-- [ ] Google sign-in works on Android and iOS
-- [ ] Apple sign-in works on iOS (requires capability)
-- [ ] Microsoft sign-in is visibly unavailable/deferred until Azure AD and Firebase provider setup are complete
-- [ ] Theme toggle (System/Light/Dark) persists across restarts
-- [ ] Animated splash screen displays logo then transitions
-- [ ] Sign-out preserves local habit access
-- [ ] Onboarding only shows once after local-only entry or auth
-- [ ] Export/import still works after rename
-
-## Possible Pitfalls
-
-1. **Firebase not configured**: App catches the init error and continues in local-only mode. Run `flutterfire configure` before testing Google or Apple sign-in.
-2. **Apple sign-in on Android**: Button is only shown on iOS/macOS. If you need it on Android, use Firebase's `signInWithProvider` instead.
-3. **SHA-1 for Google Sign-In (Android)**: Must be registered in Firebase Console. Use `./gradlew signingReport` to get your debug SHA-1.
-4. **Apple Developer account**: Sign in with Apple requires an active Apple Developer Program membership and the capability enabled.
-5. **Splash logo PNGs**: Placeholders are 1x1 transparent. Replace with 1152x1152 branded PNGs before running `flutter_native_splash:create`.
-6. **Database migration**: The SQLite filename is still `habit_flow.sqlite` intentionally to preserve existing user data.
-7. **Firebase config vs credentials**: Generated Firebase app identifiers are configuration, but OAuth provider secrets and signing credentials must stay outside source control.
+---
 
 ## Licence
 
-This project is provided as-is for educational and personal use.
+Provided as-is for educational and portfolio use.

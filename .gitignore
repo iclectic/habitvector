@@ -48,3 +48,19 @@ app.*.map.json
 
 # Compound Engineering local config
 .compound-engineering/*.local.yaml
+
+# Firebase secrets (never commit these)
+google-services.json
+GoogleService-Info.plist
+lib/firebase_options.dart
+
+# Android signing
+*.jks
+*.keystore
+key.properties
+
+# Coverage
+coverage/
+
+# Windsurf local
+.windsurf/

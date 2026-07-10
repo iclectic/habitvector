@@ -9,6 +9,7 @@ import '../../providers/auth_providers.dart';
 import '../../providers/providers.dart';
 import '../../providers/theme_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../../domain/services/privacy_consent_service.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -237,6 +238,54 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: AppTheme.spacingLg),
 
+          // Privacy
+          _SectionHeader(title: 'Privacy'),
+          const SizedBox(height: AppTheme.spacingSm),
+          ref.watch(privacyConsentServiceProvider).when(
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+            data: (consentService) => Card(
+              child: Column(
+                children: [
+                  Semantics(
+                    label: 'Anonymous analytics. ${consentService.analyticsOptIn ? 'Currently enabled' : 'Currently disabled'}. Double tap to toggle.',
+                    child: SwitchListTile(
+                      secondary: Icon(Icons.analytics_outlined,
+                          color: theme.colorScheme.primary),
+                      title: const Text('Anonymous Analytics'),
+                      subtitle: const Text(
+                          'Share aggregate, anonymous usage data to help improve the app. No habit names or personal content are included.'),
+                      value: consentService.analyticsOptIn,
+                      onChanged: (value) async {
+                        await consentService.setAnalyticsOptIn(value);
+                        ref.invalidate(privacyConsentServiceProvider);
+                      },
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  Semantics(
+                    label: 'Delete all local data',
+                    button: true,
+                    child: ListTile(
+                      leading: Icon(Icons.delete_forever_rounded,
+                          color: theme.colorScheme.error),
+                      title: Text(
+                        'Delete All Data',
+                        style: TextStyle(color: theme.colorScheme.error),
+                      ),
+                      subtitle: const Text(
+                          'Permanently remove all habits, logs, and settings from this device.'),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () =>
+                          _confirmDeleteAll(context, ref, consentService),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: AppTheme.spacingLg),
+
           // About
           _SectionHeader(title: 'About'),
           const SizedBox(height: AppTheme.spacingSm),
@@ -283,6 +332,63 @@ class SettingsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _confirmDeleteAll(
+    BuildContext context,
+    WidgetRef ref,
+    PrivacyConsentService consentService,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete All Data'),
+        content: const Text(
+          'This will permanently delete all your habits, logs, check-ins, '
+          'and settings from this device.\n\nThis action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+              foregroundColor: Theme.of(ctx).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete Everything'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      final habitUseCases = ref.read(habitUseCasesProvider);
+      final habits = await ref.read(habitRepositoryProvider).getAllHabits();
+      for (final h in habits) {
+        await habitUseCases.deleteHabit(h.id);
+      }
+      await consentService.clearConsentFlags();
+      ref.invalidate(activeHabitsProvider);
+      ref.invalidate(todayLogsProvider);
+      ref.invalidate(privacyConsentServiceProvider);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('All data deleted.')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Deletion failed: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {

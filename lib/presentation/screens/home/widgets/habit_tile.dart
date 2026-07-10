@@ -56,7 +56,16 @@ class _HabitTileState extends State<HabitTile>
     final isSkipped = widget.log?.skipped == true;
     final habitColour = widget.habit.colour;
 
-    return ScaleTransition(
+    final statusLabel = isCompleted
+        ? 'completed'
+        : isSkipped
+            ? 'skipped'
+            : 'not completed';
+
+    return Semantics(
+      label: '${widget.habit.title}, $statusLabel. Double tap to open details.',
+      button: true,
+      child: ScaleTransition(
       scale: _scaleAnim,
       child: Card(
         child: InkWell(
@@ -110,15 +119,20 @@ class _HabitTileState extends State<HabitTile>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (!isCompleted && !isSkipped)
-                      IconButton(
-                        icon: Icon(
-                          Icons.skip_next_rounded,
-                          color: theme.colorScheme.onSurface.withOpacity(0.4),
-                          size: 20,
+                      Semantics(
+                        label: 'Skip ${widget.habit.title}',
+                        button: true,
+                        excludeSemantics: true,
+                        child: IconButton(
+                          icon: Icon(
+                            Icons.skip_next_rounded,
+                            color: theme.colorScheme.onSurface.withOpacity(0.4),
+                            size: 20,
+                          ),
+                          onPressed: widget.onSkip,
+                          tooltip: 'Skip ${widget.habit.title}',
+                          visualDensity: VisualDensity.compact,
                         ),
-                        onPressed: widget.onSkip,
-                        tooltip: 'Skip',
-                        visualDensity: VisualDensity.compact,
                       ),
                     _buildMainAction(
                         theme, isCompleted, isSkipped, habitColour),
@@ -129,7 +143,7 @@ class _HabitTileState extends State<HabitTile>
           ),
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildSubtitle(ThemeData theme, bool isCompleted, bool isSkipped) {
@@ -200,7 +214,16 @@ class _HabitTileState extends State<HabitTile>
       );
     }
 
-    return GestureDetector(
+    final toggleLabel = isCompleted
+        ? 'Mark ${widget.habit.title} as not done'
+        : 'Mark ${widget.habit.title} as done';
+
+    return Semantics(
+      label: toggleLabel,
+      button: true,
+      checked: isCompleted,
+      excludeSemantics: true,
+      child: GestureDetector(
       onTap: () {
         _animController.forward().then((_) {
           _animController.reverse();
@@ -234,7 +257,7 @@ class _HabitTileState extends State<HabitTile>
                     color: AppTheme.warningColour, size: 16)
                 : null,
       ),
-    );
+    ));
   }
 
   void _showQuantityDialog() {
